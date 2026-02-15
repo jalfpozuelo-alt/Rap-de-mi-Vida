@@ -19,14 +19,33 @@
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4 font-sans">
 
-    <div id="splashScreen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-purple-900 to-black p-8 text-center">
-        <i data-lucide="disc" class="w-24 h-24 mb-6 animate-spin-slow text-purple-400"></i>
-        <h1 class="text-4xl font-bold mb-2">El Rap de mi Vida</h1>
-        <p class="text-xl opacity-70 mb-8">Ésta es la historia de un "Baby Boom"</p>
-        <button id="unlockAudioBtn" class="bg-white text-purple-900 px-10 py-4 rounded-full font-black text-xl shadow-xl hover:scale-105 transition-transform flex items-center gap-3">
-            <i data-lucide="play"></i> ENTRA
-        </button>
-    </div>
+<div id="splashScreen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-purple-900 to-black p-8 text-center">
+    
+    <i data-lucide="disc" class="w-20 h-20 md:w-24 md:h-24 mb-6 animate-spin-slow text-purple-400"></i>
+
+    <span class="text-purple-300 font-black text-lg md:text-2xl uppercase tracking-widest mb-2">
+        De 1960 a 2025
+    </span>
+
+    <h1 class="text-4xl md:text-6xl font-bold mb-2 text-white">
+        El Rap de mi Vida
+    </h1>
+
+    <p class="text-lg md:text-xl opacity-70 mb-10 text-white/80">
+        Ésta es la historia de un "Baby Boom"
+    </p>
+
+    <button id="unlockAudioBtn" class="bg-white text-purple-900 px-10 py-4 rounded-full font-black text-xl shadow-2xl hover:scale-105 transition-transform flex items-center gap-3">
+        <i data-lucide="play"></i> ENTRA
+    </button>
+
+    <footer class="absolute bottom-8 w-full left-0">
+        <p class="text-sm md:text-base font-medium opacity-50 text-white tracking-wider">
+            Juan Alfonso Pozuelo
+        </p>
+    </footer>
+
+</div>
 
     <div id="cdPlayer" class="hidden jewel-case w-full max-w-4xl rounded-3xl p-6 md:p-10 border border-white/10 shadow-2xl">
         <div class="grid md:grid-cols-2 gap-10">
