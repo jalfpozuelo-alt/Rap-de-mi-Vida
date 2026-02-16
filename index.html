@@ -94,7 +94,7 @@
     </div>
 
     <script>
-        // DATOS DE LAS 10 CANCIONES (Nombres de archivos exactos para GitHub)
+        // DATOS DE LAS CANCIONES
         const albumData = [
             { title: "Aprendiz del 60", audio: "01 Aprendiz del 60.mp3", story: "Nací en el seno de familia obrera. Crecí en la sencillez de un piso pequeño, jugando en las calles de mi barrio. Siempre me han acompañado mis orígenes y sé que me hicieron mejor persona." },
             { title: "Fuera del Banquillo", audio: "02 Fuera del Banquillo.mp3", story: "No me gustaba estudiar. Estaba deseando empezar a trabajar. Cuando ahora veo a niños de 14 años, me cuesta verme a mi con esa edad y trabajando. Era un niño..." },
@@ -115,8 +115,39 @@
         const unlockBtn = document.getElementById('unlockAudioBtn');
         const playPauseBtn = document.getElementById('playPauseBtn');
 
+        // --- FUNCIONALIDAD DE REGISTRO CON PAÍS ---
+        async function registrarAcceso() {
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbzE8xRz_JV8hsGU1-kDCDtMtMWAeNNkKnTWCkm-R6S-Twc524vJ4yT-ZcSabpZJMQaX/exec'; 
+            let paisDetectado = "Desconocido";
+
+            try {
+                // Obtenemos país y ciudad mediante API gratuita
+                const response = await fetch('https://ipapi.co/json/');
+                const geoData = await response.json();
+                if(geoData.country_name) {
+                    paisDetectado = `${geoData.country_name} (${geoData.city})`;
+                }
+            } catch (err) {
+                console.log("No se pudo obtener ubicación.");
+            }
+
+            const data = {
+                idioma: navigator.language,
+                plataforma: navigator.userAgentData ? navigator.userAgentData.platform : navigator.platform,
+                referencia: document.referrer || 'Acceso Directo',
+                pais: paisDetectado
+            };
+
+            const params = new URLSearchParams(data).toString();
+            
+            // Envío a Google Sheets (modo no-cors para evitar bloqueos)
+            fetch(`${scriptURL}?${params}`, { mode: 'no-cors' })
+            .catch(e => console.log("Registro silencioso"));
+        }
+
         // INICIALIZACIÓN
         unlockBtn.addEventListener('click', () => {
+            registrarAcceso(); // Registra al entrar
             document.getElementById('splashScreen').style.display = 'none';
             document.getElementById('cdPlayer').classList.remove('hidden');
             renderTracklist();
@@ -137,9 +168,7 @@
         }
 
         function loadTrack(index) {
-            // Quitar clase activa previa
             document.querySelectorAll('[id^="track-"]').forEach(el => el.classList.remove('track-active'));
-            
             currentTrack = index;
             const track = albumData[index];
             audio.src = track.audio;
@@ -191,7 +220,6 @@
 
         audio.onended = () => document.getElementById('nextBtn').click();
 
-        // Inicializar iconos al cargar
         window.onload = () => lucide.createIcons();
     </script>
 </body>
