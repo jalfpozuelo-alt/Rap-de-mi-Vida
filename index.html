@@ -53,17 +53,12 @@
     </footer>
 </div>
 
-<div id="cdPlayer" class="hidden jewel-case w-full max-w-4xl rounded-3xl p-6 md:p-8 border border-white/10 shadow-2xl overflow-hidden">
-    <div class="grid md:grid-cols-2 gap-8 max-h-[85vh]">
+<div id="cdPlayer" class="hidden jewel-case w-full max-w-4xl rounded-3xl p-6 md:p-8 border border-white/10 shadow-2xl">
+    <div class="grid md:grid-cols-2 gap-8">
         
         <div class="flex flex-col justify-center space-y-6">
-            <div class="relative w-48 h-48 mx-auto rounded-xl overflow-hidden shadow-2xl bg-black group">
+            <div class="relative w-48 h-48 mx-auto rounded-xl overflow-hidden shadow-2xl bg-black">
                 <img id="albumArt" src="portada.png" class="absolute inset-0 w-full h-full object-cover z-20" alt="Portada">
-                <div id="cdVisual" class="absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div class="cd-disc w-32 h-32 rounded-full border-2 border-gray-700 relative">
-                        <div class="absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-gray-900 rounded-full border-2 border-gray-800"></div>
-                    </div>
-                </div>
             </div>
 
             <div class="lcd-display p-4 rounded-lg font-mono text-green-400 border border-black/50">
@@ -84,16 +79,18 @@
             </div>
         </div>
 
-        <div class="flex flex-col space-y-4 overflow-y-auto pr-2 custom-scrollbar max-h-[70vh] md:max-h-none">
+        <div class="flex flex-col space-y-4">
             <div class="bg-black/30 rounded-2xl p-4">
                 <h2 class="text-sm font-bold uppercase tracking-widest opacity-50 mb-3">Tracklist</h2>
                 <div id="trackList" class="space-y-1">
                     </div>
             </div>
 
-            <div class="bg-white/5 p-5 rounded-2xl border border-white/5">
+            <div class="bg-white/5 p-5 rounded-2xl border border-white/5 flex flex-col">
                 <h3 class="text-blue-400 text-xs font-bold uppercase mb-2">Notas del autor</h3>
-                <p id="linerNotes" class="text-sm leading-relaxed opacity-80 italic">Haz clic en una canción para leer su historia.</p>
+                <div class="max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                    <p id="linerNotes" class="text-sm leading-relaxed opacity-80 italic">Haz clic en una canción para leer su historia.</p>
+                </div>
             </div>
         </div>
 
@@ -112,35 +109,28 @@
             const resp = await fetch('claves.dat?v=' + Date.now());
             if (!resp.ok) throw new Error();
             const texto = await resp.text();
-            
             const lineas = texto.split('\n');
             let cPrivada = "", cPublica = "";
-
             lineas.forEach(l => {
                 const limpia = l.trim();
                 if (limpia.toLowerCase().startsWith('privada:')) cPrivada = limpia.split(':')[1].trim();
-                if (limpia.toLowerCase().startsWith('pública:') || limpia.toLowerCase().startsWith('publica:')) {
-                    cPublica = limpia.split(':')[1].trim();
-                }
+                if (limpia.toLowerCase().includes('publica:')) cPublica = limpia.split(':')[1].trim();
             });
-
             const ingresada = passInput.value.trim();
-
             if ((cPrivada && ingresada === cPrivada) || (cPublica && ingresada === cPublica)) {
                 passScreen.style.opacity = '0';
                 setTimeout(() => passScreen.style.display = 'none', 500);
             } else {
                 intentos--;
-                if (intentos <= 0) {
-                    document.getElementById('loginContainer').innerHTML = "<h2 class='text-red-500 font-bold'>BLOQUEADO</h2>";
-                } else {
-                    passError.innerText = `Clave incorrecta. Te quedan ${intentos} intentos.`;
+                if (intentos <= 0) document.getElementById('loginContainer').innerHTML = "<h2 class='text-red-500 font-bold'>BLOQUEADO</h2>";
+                else {
+                    passError.innerText = `Incorrecta. Quedan ${intentos} intentos.`;
                     passError.classList.remove('hidden');
                     passInput.value = "";
                 }
             }
         } catch (e) {
-            passError.innerText = "Error: El archivo 'claves.dat' no se encuentra.";
+            passError.innerText = "Error cargando claves.dat";
             passError.classList.remove('hidden');
         }
     }
@@ -148,7 +138,7 @@
     document.getElementById('checkPassBtn').onclick = validarAcceso;
     passInput.onkeypress = (e) => { if(e.key === 'Enter') validarAcceso(); };
 
-    // --- DATOS ORIGINALES ---
+    // --- DATOS ---
     const albumData = [
         { title: "Prólogo", audio: "00 Prólogo.mp3", story: "" },
         { title: "Aprendiz del 60", audio: "01 Aprendiz del 60.mp3", story: "Nací en el seno de familia obrera. Crecí en la sencillez de un piso pequeño, jugando en las calles de mi barrio. Siempre me han acompañado mis orígenes y sé que me hicieron mejor persona." },
@@ -175,15 +165,7 @@
             pais = geo.country_name || "Desconocido";
             ciudad = geo.city || "Desconocida";
         } catch (err) {}
-
-        const data = { 
-            idioma: navigator.language, 
-            plataforma: navigator.platform, 
-            referencia: document.referrer || 'Directo', 
-            pais: pais,
-            ciudad: ciudad,
-            resolucion: `${window.screen.width}x${window.screen.height}`
-        };
+        const data = { idioma: navigator.language, plataforma: navigator.platform, referencia: document.referrer || 'Directo', pais: pais, ciudad: ciudad, resolucion: `${window.screen.width}x${window.screen.height}` };
         fetch(`${scriptURL}?${new URLSearchParams(data).toString()}`, { mode: 'no-cors' });
     }
 
