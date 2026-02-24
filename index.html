@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>El Rap de mi Vida - CD Interactivo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -15,37 +15,27 @@
         .track-active { background: rgba(59, 130, 246, 0.3) !important; border-left: 4px solid #3b82f6; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
-        
-        /* Estilos adicionales para la seguridad */
-        #passwordScreen { transition: opacity 0.5s ease-in-out; }
-        .input-error { border-color: #f87171 !important; animation: shake 0.4s ease-in-out; }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
+        #passwordScreen { transition: opacity 0.5s ease; -webkit-backdrop-filter: blur(20px); }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4 font-sans">
 
-<div id="passwordScreen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-2xl">
+<div id="passwordScreen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/95">
     <div id="loginContainer" class="max-w-md w-full p-8 text-center space-y-6">
         <div class="inline-block p-4 rounded-full bg-purple-500/10 mb-2">
             <i data-lucide="lock" class="w-12 h-12 text-purple-400"></i>
         </div>
-        <h2 class="text-2xl font-bold tracking-tight">Acceso Restringido</h2>
-        <p class="text-gray-400 text-sm">Esta obra requiere una clave de acceso para continuar.</p>
-        
-        <div class="relative">
-            <input type="password" id="passInput" placeholder="Clave de acceso" 
-                   class="w-full bg-white/5 border border-white/10 py-4 px-6 rounded-2xl text-center text-xl tracking-[0.3em] focus:border-purple-500 outline-none transition-all">
-            <p id="passError" class="text-red-400 text-xs mt-4 hidden font-medium"></p>
+        <h2 class="text-2xl font-bold">Acceso Restringido</h2>
+        <p class="text-gray-400 text-sm">Introduce la clave para acceder al contenido.</p>
+        <div class="space-y-4">
+            <input type="text" id="passInput" placeholder="Clave" 
+                   class="w-full bg-white/10 border border-white/20 py-4 px-6 rounded-2xl text-center text-xl outline-none focus:border-purple-500"
+                   autocapitalize="none" autocomplete="off" spellcheck="false">
+            <p id="passError" class="text-red-400 text-xs hidden font-medium"></p>
+            <button id="checkPassBtn" class="w-full bg-purple-600 hover:bg-purple-500 py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95">
+                VALIDAR CLAVE
+            </button>
         </div>
-
-        <button id="checkPassBtn" class="w-full bg-purple-600 hover:bg-purple-500 py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95">
-            VALIDAR ACCESO
-        </button>
-        <p class="text-[10px] uppercase tracking-widest opacity-30">Sistema de Seguridad de "El Rap de mi Vida"</p>
     </div>
 </div>
 
@@ -58,11 +48,11 @@
         <i data-lucide="play"></i> ENTRA
     </button>
     <footer class="absolute bottom-8 w-full left-0">
-        <p class="text-sm md:text-base font-medium opacity-50 text-white tracking-wider">Juan Alfonso Pozuelo</p>
+        <p class="text-sm md:text-base font-medium opacity-50 text-white tracking-wider text-center">Juan Alfonso Pozuelo</p>
     </footer>
 </div>
 
-<div id="cdPlayer" class="hidden jewel-case w-full max-w-4xl rounded-3xl p-6 md:p-10 border border-white/10 shadow-2xl">
+<div id="cdPlayer" class="hidden jewel-case w-full max-w-4xl rounded-3xl p-6 md:p-10 border border-white/10 shadow-2xl overflow-y-auto max-h-[90vh]">
     <div class="grid md:grid-cols-2 gap-10">
         <div class="space-y-6">
             <div class="relative aspect-square rounded-xl overflow-hidden shadow-2xl bg-black group">
@@ -90,7 +80,7 @@
             </div>
         </div>
         <div class="flex flex-col h-full space-y-4">
-            <div class="flex-1 bg-black/30 rounded-2xl p-4 overflow-hidden flex flex-col">
+            <div class="flex-1 bg-black/30 rounded-2xl p-4 overflow-hidden flex flex-col min-h-[200px]">
                 <h2 class="text-sm font-bold uppercase tracking-widest opacity-50 mb-3">Tracklist</h2>
                 <div id="trackList" class="flex-1 overflow-y-auto custom-scrollbar space-y-1 pr-2"></div>
             </div>
@@ -103,62 +93,55 @@
 </div>
 
 <script>
-    // --- LÓGICA DE SEGURIDAD (Módulo nuevo) ---
-    let intentosRestantes = 3;
+    // --- LÓGICA DE SEGURIDAD (CON CLAVES.DAT) ---
+    let intentos = 3;
     const passScreen = document.getElementById('passwordScreen');
-    const loginContainer = document.getElementById('loginContainer');
     const passInput = document.getElementById('passInput');
-    const checkPassBtn = document.getElementById('checkPassBtn');
     const passError = document.getElementById('passError');
 
     async function validarAcceso() {
         try {
-            const response = await fetch('Claves.dat');
-            if (!response.ok) throw new Error();
-            const texto = await response.text();
+            // El ?v= evita que el iPhone use una versión vieja guardada en caché
+            const resp = await fetch('claves.dat?v=' + Date.now());
+            if (!resp.ok) throw new Error();
+            const texto = await resp.text();
             
             const lineas = texto.split('\n');
-            const clavePrivada = lineas.find(l => l.toLowerCase().includes('privada:'))?.split(':')[1].trim();
-            const clavePublica = lineas.find(l => l.toLowerCase().includes('pública:'))?.split(':')[1].trim();
+            let cPrivada = "", cPublica = "";
 
-            const valorIngresado = passInput.value.trim();
+            lineas.forEach(l => {
+                const limpia = l.trim();
+                if (limpia.toLowerCase().startsWith('privada:')) cPrivada = limpia.split(':')[1].trim();
+                if (limpia.toLowerCase().startsWith('pública:') || limpia.toLowerCase().startsWith('publica:')) {
+                    cPublica = limpia.split(':')[1].trim();
+                }
+            });
 
-            if (valorIngresado === clavePrivada || valorIngresado === clavePublica) {
+            const ingresada = passInput.value.trim();
+
+            if ((cPrivada && ingresada === cPrivada) || (cPublica && ingresada === cPublica)) {
                 passScreen.style.opacity = '0';
                 setTimeout(() => passScreen.style.display = 'none', 500);
             } else {
-                intentosRestantes--;
-                passInput.classList.add('input-error');
-                setTimeout(() => passInput.classList.remove('input-error'), 400);
-                
-                if (intentosRestantes <= 0) {
-                    bloquearSistema();
+                intentos--;
+                if (intentos <= 0) {
+                    document.getElementById('loginContainer').innerHTML = "<h2 class='text-red-500 font-bold'>BLOQUEADO</h2><p class='text-xs opacity-50'>Demasiados intentos.</p>";
                 } else {
-                    passError.innerText = `Clave incorrecta. Te quedan ${intentosRestantes} intentos.`;
+                    passError.innerText = `Incorrecta. Quedan ${intentos} intentos.`;
                     passError.classList.remove('hidden');
                     passInput.value = "";
-                    passInput.focus();
                 }
             }
-        } catch (error) {
-            passError.innerText = "Error: No se pudo verificar el archivo de claves.";
+        } catch (e) {
+            passError.innerText = "Error: El archivo 'claves.dat' no se encuentra.";
             passError.classList.remove('hidden');
         }
     }
 
-    function bloquearSistema() {
-        loginContainer.innerHTML = `
-            <div class="text-red-500 mb-4"><i data-lucide="shield-off" class="w-16 h-16 mx-auto"></i></div>
-            <h2 class="text-2xl font-bold text-red-500">Sistema Bloqueado</h2>
-            <p class="text-gray-400">Has superado el número de intentos permitidos.</p>
-        `;
-        lucide.createIcons();
-    }
+    document.getElementById('checkPassBtn').onclick = validarAcceso;
+    passInput.onkeypress = (e) => { if(e.key === 'Enter') validarAcceso(); };
 
-    checkPassBtn.addEventListener('click', validarAcceso);
-    passInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') validarAcceso(); });
-
-    // --- CÓDIGO ORIGINAL (Sin cambios) ---
+    // --- DATOS Y LÓGICA ORIGINAL ---
     const albumData = [
         { title: "Prólogo", audio: "00 Prólogo.mp3", story: "" },
         { title: "Aprendiz del 60", audio: "01 Aprendiz del 60.mp3", story: "Nací en el seno de familia obrera. Crecí en la sencillez de un piso pequeño, jugando en las calles de mi barrio. Siempre me han acompañado mis orígenes y sé que me hicieron mejor persona." },
@@ -174,48 +157,35 @@
     ];
 
     let currentTrack = 0;
-    let isPlaying = false;
     const audio = new Audio();
-    const unlockBtn = document.getElementById('unlockAudioBtn');
-    const playPauseBtn = document.getElementById('playPauseBtn');
 
     async function registrarAcceso() {
         const scriptURL = 'https://script.google.com/macros/s/AKfycbzE8xRz_JV8hsGU1-kDCDtMtMWAeNNkKnTWCkm-R6S-Twc524vJ4yT-ZcSabpZJMQaX/exec'; 
-        let paisDetectado = "Desconocido";
+        let pais = "Desconocido";
         try {
-            const response = await fetch('https://ipapi.co/json/');
-            const geoData = await response.json();
-            if(geoData.country_name) {
-                paisDetectado = `${geoData.country_name} (${geoData.city})`;
-            }
-        } catch (err) { console.log("No se pudo obtener ubicación."); }
-
-        const data = {
-            idioma: navigator.language,
-            plataforma: navigator.userAgentData ? navigator.userAgentData.platform : navigator.platform,
-            referencia: document.referrer || 'Acceso Directo',
-            pais: paisDetectado
-        };
-
-        const params = new URLSearchParams(data).toString();
-        fetch(`${scriptURL}?${params}`, { mode: 'no-cors' }).catch(e => console.log("Registro silencioso"));
+            const res = await fetch('https://ipapi.co/json/');
+            const geo = await res.json();
+            if(geo.country_name) pais = `${geo.country_name} (${geo.city})`;
+        } catch (err) {}
+        const data = { idioma: navigator.language, plataforma: navigator.platform, referencia: document.referrer || 'Directo', pais: pais };
+        fetch(`${scriptURL}?${new URLSearchParams(data).toString()}`, { mode: 'no-cors' });
     }
 
-    unlockBtn.addEventListener('click', () => {
+    document.getElementById('unlockAudioBtn').onclick = () => {
         registrarAcceso();
         document.getElementById('splashScreen').style.display = 'none';
         document.getElementById('cdPlayer').classList.remove('hidden');
         renderTracklist();
         loadTrack(0);
         lucide.createIcons();
-    });
+    };
 
     function renderTracklist() {
         const list = document.getElementById('trackList');
         albumData.forEach((t, i) => {
             const item = document.createElement('div');
             item.className = `p-3 rounded-xl cursor-pointer hover:bg-white/5 transition-all flex items-center gap-3`;
-            item.onclick = () => { loadTrack(i); playTrack(); };
+            item.onclick = () => { loadTrack(i); audio.play(); updateIcons('pause'); };
             item.innerHTML = `<span class="opacity-30 text-xs">${i+1}</span> <span class="text-sm font-medium">${t.title}</span>`;
             item.id = `track-${i}`;
             list.appendChild(item);
@@ -225,45 +195,25 @@
     function loadTrack(index) {
         document.querySelectorAll('[id^="track-"]').forEach(el => el.classList.remove('track-active'));
         currentTrack = index;
-        const track = albumData[index];
-        audio.src = track.audio;
-        document.getElementById('lcdTitle').innerText = track.title;
+        audio.src = albumData[index].audio;
+        document.getElementById('lcdTitle').innerText = albumData[index].title;
         document.getElementById('lcdTrack').innerText = `TRACK ${String(index + 1).padStart(2, '0')}`;
-        document.getElementById('linerNotes').innerText = track.story;
+        document.getElementById('linerNotes').innerText = albumData[index].story;
         document.getElementById(`track-${index}`).classList.add('track-active');
-        
-        if ('mediaSession' in navigator) {
-            navigator.mediaSession.metadata = new MediaMetadata({
-                title: track.title,
-                artist: 'Ésta es la historia de un Baby Boom',
-                artwork: [{ src: 'portada.png', sizes: '512x512', type: 'image/png' }]
-            });
-        }
     }
 
-    function playTrack() {
-        audio.play();
-        isPlaying = true;
-        document.getElementById('albumArt').classList.add('animate-spin-slow');
-        updateIcons('pause');
-    }
-
-    function pauseTrack() {
-        audio.pause();
-        isPlaying = false;
-        document.getElementById('albumArt').classList.remove('animate-spin-slow');
-        updateIcons('play');
-    }
+    document.getElementById('playPauseBtn').onclick = () => {
+        if (audio.paused) { audio.play(); updateIcons('pause'); } 
+        else { audio.pause(); updateIcons('play'); }
+    };
 
     function updateIcons(name) {
-        const icon = document.getElementById('playIcon');
-        icon.setAttribute('data-lucide', name);
+        document.getElementById('playIcon').setAttribute('data-lucide', name);
         lucide.createIcons();
     }
 
-    playPauseBtn.onclick = () => isPlaying ? pauseTrack() : playTrack();
-    document.getElementById('nextBtn').onclick = () => { let next = (currentTrack + 1) % albumData.length; loadTrack(next); playTrack(); };
-    document.getElementById('prevBtn').onclick = () => { let prev = (currentTrack - 1 + albumData.length) % albumData.length; loadTrack(prev); playTrack(); };
+    document.getElementById('nextBtn').onclick = () => { loadTrack((currentTrack+1)%albumData.length); audio.play(); updateIcons('pause'); };
+    document.getElementById('prevBtn').onclick = () => { loadTrack((currentTrack-1+albumData.length)%albumData.length); audio.play(); updateIcons('pause'); };
 
     audio.ontimeupdate = () => {
         const pct = (audio.currentTime / audio.duration) * 100;
@@ -273,7 +223,6 @@
         document.getElementById('lcdTime').innerText = `${m}:${String(s).padStart(2, '0')}`;
     };
 
-    audio.onended = () => document.getElementById('nextBtn').click();
     window.onload = () => lucide.createIcons();
 </script>
 </body>
