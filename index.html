@@ -16,6 +16,7 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
         #passwordScreen { transition: opacity 0.5s ease; -webkit-backdrop-filter: blur(20px); }
+        input { -webkit-appearance: none; border-radius: 1rem; }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4 font-sans">
@@ -23,17 +24,17 @@
 <div id="passwordScreen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/95">
     <div id="loginContainer" class="max-w-md w-full p-8 text-center space-y-6">
         <div class="inline-block p-4 rounded-full bg-purple-500/10 mb-2">
-            <i data-lucide="lock" class="w-12 h-12 text-purple-400"></i>
+            <i data-lucide="lock" class="w-12 h-12 text-purple-400 mx-auto"></i>
         </div>
-        <h2 class="text-2xl font-bold">Acceso Restringido</h2>
+        <h2 class="text-2xl font-bold">Acceso Privado</h2>
         <p class="text-gray-400 text-sm">Introduce la clave para acceder al contenido.</p>
         <div class="space-y-4">
-            <input type="text" id="passInput" placeholder="Clave" 
+            <input type="text" id="passInput" placeholder="Clave de acceso" 
                    class="w-full bg-white/10 border border-white/20 py-4 px-6 rounded-2xl text-center text-xl outline-none focus:border-purple-500"
                    autocapitalize="none" autocomplete="off" spellcheck="false">
             <p id="passError" class="text-red-400 text-xs hidden font-medium"></p>
-            <button id="checkPassBtn" class="w-full bg-purple-600 hover:bg-purple-500 py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95">
-                VALIDAR CLAVE
+            <button id="checkPassBtn" class="w-full bg-purple-600 py-4 rounded-2xl font-bold active:bg-purple-700 transition-all shadow-lg">
+                VALIDAR
             </button>
         </div>
     </div>
@@ -52,7 +53,7 @@
     </footer>
 </div>
 
-<div id="cdPlayer" class="hidden jewel-case w-full max-w-4xl rounded-3xl p-6 md:p-10 border border-white/10 shadow-2xl overflow-y-auto max-h-[90vh]">
+<div id="cdPlayer" class="hidden jewel-case w-full max-w-4xl rounded-3xl p-6 md:p-10 border border-white/10 shadow-2xl overflow-y-auto max-h-[95vh]">
     <div class="grid md:grid-cols-2 gap-10">
         <div class="space-y-6">
             <div class="relative aspect-square rounded-xl overflow-hidden shadow-2xl bg-black group">
@@ -80,7 +81,7 @@
             </div>
         </div>
         <div class="flex flex-col h-full space-y-4">
-            <div class="flex-1 bg-black/30 rounded-2xl p-4 overflow-hidden flex flex-col min-h-[200px]">
+            <div class="flex-1 bg-black/30 rounded-2xl p-4 overflow-hidden flex flex-col min-h-[150px]">
                 <h2 class="text-sm font-bold uppercase tracking-widest opacity-50 mb-3">Tracklist</h2>
                 <div id="trackList" class="flex-1 overflow-y-auto custom-scrollbar space-y-1 pr-2"></div>
             </div>
@@ -93,7 +94,7 @@
 </div>
 
 <script>
-    // --- LÓGICA DE SEGURIDAD (CON CLAVES.DAT) ---
+    // --- LÓGICA DE SEGURIDAD (claves.dat) ---
     let intentos = 3;
     const passScreen = document.getElementById('passwordScreen');
     const passInput = document.getElementById('passInput');
@@ -101,7 +102,6 @@
 
     async function validarAcceso() {
         try {
-            // El ?v= evita que el iPhone use una versión vieja guardada en caché
             const resp = await fetch('claves.dat?v=' + Date.now());
             if (!resp.ok) throw new Error();
             const texto = await resp.text();
@@ -125,9 +125,9 @@
             } else {
                 intentos--;
                 if (intentos <= 0) {
-                    document.getElementById('loginContainer').innerHTML = "<h2 class='text-red-500 font-bold'>BLOQUEADO</h2><p class='text-xs opacity-50'>Demasiados intentos.</p>";
+                    document.getElementById('loginContainer').innerHTML = "<h2 class='text-red-500 font-bold'>BLOQUEADO</h2>";
                 } else {
-                    passError.innerText = `Incorrecta. Quedan ${intentos} intentos.`;
+                    passError.innerText = `Clave incorrecta. Quedan ${intentos} intentos.`;
                     passError.classList.remove('hidden');
                     passInput.value = "";
                 }
@@ -141,7 +141,7 @@
     document.getElementById('checkPassBtn').onclick = validarAcceso;
     passInput.onkeypress = (e) => { if(e.key === 'Enter') validarAcceso(); };
 
-    // --- DATOS Y LÓGICA ORIGINAL ---
+    // --- DATOS ORIGINALES ---
     const albumData = [
         { title: "Prólogo", audio: "00 Prólogo.mp3", story: "" },
         { title: "Aprendiz del 60", audio: "01 Aprendiz del 60.mp3", story: "Nací en el seno de familia obrera. Crecí en la sencillez de un piso pequeño, jugando en las calles de mi barrio. Siempre me han acompañado mis orígenes y sé que me hicieron mejor persona." },
@@ -159,15 +159,26 @@
     let currentTrack = 0;
     const audio = new Audio();
 
+    // --- FUNCIÓN DE REGISTRO MEJORADA (Google Sheets) ---
     async function registrarAcceso() {
         const scriptURL = 'https://script.google.com/macros/s/AKfycbzE8xRz_JV8hsGU1-kDCDtMtMWAeNNkKnTWCkm-R6S-Twc524vJ4yT-ZcSabpZJMQaX/exec'; 
         let pais = "Desconocido";
+        let ciudad = "Desconocida";
         try {
             const res = await fetch('https://ipapi.co/json/');
             const geo = await res.json();
-            if(geo.country_name) pais = `${geo.country_name} (${geo.city})`;
+            pais = geo.country_name || "Desconocido";
+            ciudad = geo.city || "Desconocida";
         } catch (err) {}
-        const data = { idioma: navigator.language, plataforma: navigator.platform, referencia: document.referrer || 'Directo', pais: pais };
+
+        const data = { 
+            idioma: navigator.language, 
+            plataforma: navigator.platform, 
+            referencia: document.referrer || 'Directo', 
+            pais: pais,
+            ciudad: ciudad,
+            resolucion: `${window.screen.width}x${window.screen.height}`
+        };
         fetch(`${scriptURL}?${new URLSearchParams(data).toString()}`, { mode: 'no-cors' });
     }
 
@@ -223,6 +234,7 @@
         document.getElementById('lcdTime').innerText = `${m}:${String(s).padStart(2, '0')}`;
     };
 
+    audio.onended = () => document.getElementById('nextBtn').click();
     window.onload = () => lucide.createIcons();
 </script>
 </body>
