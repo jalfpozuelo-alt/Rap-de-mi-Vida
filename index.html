@@ -53,17 +53,19 @@
     </footer>
 </div>
 
-<div id="cdPlayer" class="hidden jewel-case w-full max-w-4xl rounded-3xl p-6 md:p-10 border border-white/10 shadow-2xl overflow-y-auto max-h-[95vh]">
-    <div class="grid md:grid-cols-2 gap-10">
-        <div class="space-y-6">
-            <div class="relative aspect-square rounded-xl overflow-hidden shadow-2xl bg-black group">
+<div id="cdPlayer" class="hidden jewel-case w-full max-w-4xl rounded-3xl p-6 md:p-8 border border-white/10 shadow-2xl overflow-hidden">
+    <div class="grid md:grid-cols-2 gap-8 max-h-[85vh]">
+        
+        <div class="flex flex-col justify-center space-y-6">
+            <div class="relative w-48 h-48 mx-auto rounded-xl overflow-hidden shadow-2xl bg-black group">
                 <img id="albumArt" src="portada.png" class="absolute inset-0 w-full h-full object-cover z-20" alt="Portada">
                 <div id="cdVisual" class="absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div class="cd-disc w-64 h-64 rounded-full border-4 border-gray-700 relative">
-                        <div class="absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-gray-900 rounded-full border-4 border-gray-800"></div>
+                    <div class="cd-disc w-32 h-32 rounded-full border-2 border-gray-700 relative">
+                        <div class="absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-gray-900 rounded-full border-2 border-gray-800"></div>
                     </div>
                 </div>
             </div>
+
             <div class="lcd-display p-4 rounded-lg font-mono text-green-400 border border-black/50">
                 <div class="flex justify-between text-xs mb-1">
                     <span id="lcdTrack">TRACK 01</span>
@@ -74,27 +76,32 @@
                     <div id="progressBar" class="bg-green-400 h-full w-0 transition-all duration-300"></div>
                 </div>
             </div>
+
             <div class="flex justify-center items-center gap-6">
                 <button id="prevBtn" class="p-3 hover:bg-white/10 rounded-full transition-colors"><i data-lucide="skip-back"></i></button>
                 <button id="playPauseBtn" class="bg-blue-600 p-6 rounded-full hover:bg-blue-500 shadow-lg transition-all"><i id="playIcon" data-lucide="play" class="fill-current"></i></button>
                 <button id="nextBtn" class="p-3 hover:bg-white/10 rounded-full transition-colors"><i data-lucide="skip-forward"></i></button>
             </div>
         </div>
-        <div class="flex flex-col h-full space-y-4">
-            <div class="flex-1 bg-black/30 rounded-2xl p-4 overflow-hidden flex flex-col min-h-[150px]">
+
+        <div class="flex flex-col space-y-4 overflow-y-auto pr-2 custom-scrollbar max-h-[70vh] md:max-h-none">
+            <div class="bg-black/30 rounded-2xl p-4">
                 <h2 class="text-sm font-bold uppercase tracking-widest opacity-50 mb-3">Tracklist</h2>
-                <div id="trackList" class="flex-1 overflow-y-auto custom-scrollbar space-y-1 pr-2"></div>
+                <div id="trackList" class="space-y-1">
+                    </div>
             </div>
+
             <div class="bg-white/5 p-5 rounded-2xl border border-white/5">
                 <h3 class="text-blue-400 text-xs font-bold uppercase mb-2">Notas del autor</h3>
                 <p id="linerNotes" class="text-sm leading-relaxed opacity-80 italic">Haz clic en una canción para leer su historia.</p>
             </div>
         </div>
+
     </div>
 </div>
 
 <script>
-    // --- LÓGICA DE SEGURIDAD (claves.dat) ---
+    // --- LÓGICA DE SEGURIDAD ---
     let intentos = 3;
     const passScreen = document.getElementById('passwordScreen');
     const passInput = document.getElementById('passInput');
@@ -127,7 +134,7 @@
                 if (intentos <= 0) {
                     document.getElementById('loginContainer').innerHTML = "<h2 class='text-red-500 font-bold'>BLOQUEADO</h2>";
                 } else {
-                    passError.innerText = `Clave incorrecta. Quedan ${intentos} intentos.`;
+                    passError.innerText = `Clave incorrecta. Te quedan ${intentos} intentos.`;
                     passError.classList.remove('hidden');
                     passInput.value = "";
                 }
@@ -159,11 +166,9 @@
     let currentTrack = 0;
     const audio = new Audio();
 
-    // --- FUNCIÓN DE REGISTRO MEJORADA (Google Sheets) ---
     async function registrarAcceso() {
         const scriptURL = 'https://script.google.com/macros/s/AKfycby3LA2_-HN6peTWTSxUvjecxdR4LT6_mBPSqMfiY8jsx49t3dIAex10FBBFaYaZGUFuJA/exec'; 
-        let pais = "Desconocido";
-        let ciudad = "Desconocida";
+        let pais = "Desconocido", ciudad = "Desconocida";
         try {
             const res = await fetch('https://ipapi.co/json/');
             const geo = await res.json();
