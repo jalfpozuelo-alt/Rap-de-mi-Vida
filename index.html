@@ -11,7 +11,6 @@
         .animate-spin-slow { animation: spin-slow 3s linear infinite; }
         .lcd-display { background: linear-gradient(180deg, #2a4a2a 0%, #1a3a1a 100%); box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
         .jewel-case { background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%); backdrop-filter: blur(10px); }
-        .cd-disc { background: radial-gradient(circle at 30% 30%, #e0e0e0 0%, #c0c0c0 20%, #a0a0a0 40%, #606060 100%); }
         .track-active { background: rgba(59, 130, 246, 0.3) !important; border-left: 4px solid #3b82f6; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
@@ -82,8 +81,7 @@
         <div class="flex flex-col space-y-4">
             <div class="bg-black/30 rounded-2xl p-4">
                 <h2 class="text-sm font-bold uppercase tracking-widest opacity-50 mb-3">Tracklist</h2>
-                <div id="trackList" class="space-y-1">
-                    </div>
+                <div id="trackList" class="space-y-1"></div>
             </div>
 
             <div class="bg-white/5 p-5 rounded-2xl border border-white/5 flex flex-col">
@@ -93,52 +91,38 @@
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
 <script>
-    // --- LÓGICA DE SEGURIDAD ---
+    // --- SEGURIDAD INTEGRADA (SIN ARCHIVO EXTERNO) ---
+    const CLAVE_PRIVADA = "1313";
+    const CLAVE_PUBLICA = "1960";
     let intentos = 3;
-    const passScreen = document.getElementById('passwordScreen');
-    const passInput = document.getElementById('passInput');
-    const passError = document.getElementById('passError');
 
-    async function validarAcceso() {
-        try {
-            const resp = await fetch('claves.dat?v=' + Date.now());
-            if (!resp.ok) throw new Error();
-            const texto = await resp.text();
-            const lineas = texto.split('\n');
-            let cPrivada = "", cPublica = "";
-            lineas.forEach(l => {
-                const limpia = l.trim();
-                if (limpia.toLowerCase().startsWith('privada:')) cPrivada = limpia.split(':')[1].trim();
-                if (limpia.toLowerCase().includes('publica:')) cPublica = limpia.split(':')[1].trim();
-            });
-            const ingresada = passInput.value.trim();
-            if ((cPrivada && ingresada === cPrivada) || (cPublica && ingresada === cPublica)) {
-                passScreen.style.opacity = '0';
-                setTimeout(() => passScreen.style.display = 'none', 500);
+    function validarAcceso() {
+        const ingresada = document.getElementById('passInput').value.trim();
+        const passError = document.getElementById('passError');
+
+        if (ingresada === CLAVE_PRIVADA || ingresada === CLAVE_PUBLICA) {
+            document.getElementById('passwordScreen').style.opacity = '0';
+            setTimeout(() => { document.getElementById('passwordScreen').style.display = 'none'; }, 500);
+        } else {
+            intentos--;
+            if (intentos <= 0) {
+                document.getElementById('loginContainer').innerHTML = "<h2 class='text-red-500 font-bold'>BLOQUEADO</h2>";
             } else {
-                intentos--;
-                if (intentos <= 0) document.getElementById('loginContainer').innerHTML = "<h2 class='text-red-500 font-bold'>BLOQUEADO</h2>";
-                else {
-                    passError.innerText = `Incorrecta. Quedan ${intentos} intentos.`;
-                    passError.classList.remove('hidden');
-                    passInput.value = "";
-                }
+                passError.innerText = `Incorrecta. Quedan ${intentos} intentos.`;
+                passError.classList.remove('hidden');
+                document.getElementById('passInput').value = "";
             }
-        } catch (e) {
-            passError.innerText = "Error cargando claves.dat";
-            passError.classList.remove('hidden');
         }
     }
 
     document.getElementById('checkPassBtn').onclick = validarAcceso;
-    passInput.onkeypress = (e) => { if(e.key === 'Enter') validarAcceso(); };
+    document.getElementById('passInput').onkeypress = (e) => { if(e.key === 'Enter') validarAcceso(); };
 
-    // --- DATOS ---
+    // --- REGISTRO Y REPRODUCTOR ---
     const albumData = [
         { title: "Prólogo", audio: "00 Prólogo.mp3", story: "" },
         { title: "Aprendiz del 60", audio: "01 Aprendiz del 60.mp3", story: "Nací en el seno de familia obrera. Crecí en la sencillez de un piso pequeño, jugando en las calles de mi barrio. Siempre me han acompañado mis orígenes y sé que me hicieron mejor persona." },
